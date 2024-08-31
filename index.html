@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSV Aggregator</title>
+    <!-- Materialize CSS CDN -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css" rel="stylesheet">
+</head>
+
+<body class="grey lighten-4">
+    <div class="container">
+        <h1 class="center-align">CSV アップロードと集計</h1>
+        <div class="card-panel">
+            <div class="file-field input-field">
+                <div class="btn">
+                    <span>CSV ファイルを選択</span>
+                    <input type="file" id="csvFile" accept=".csv">
+                </div>
+                <div class="file-path-wrapper">
+                    <input class="file-path validate" type="text">
+                </div>
+            </div>
+
+            <div class="input-field">
+                <input type="text" id="dateColumn" value="入店日時">
+                <label for="dateColumn">日時列名</label>
+            </div>
+
+            <div class="input-field">
+                <input type="text" id="peopleColumn" value="人数">
+                <label for="peopleColumn">人数列名</label>
+            </div>
+
+            <div class="input-field">
+                <input type="text" id="amountColumn" value="小計">
+                <label for="amountColumn">金額列名</label>
+            </div>
+
+            <div class="input-field">
+                <input type="text" id="taxColumn" value="内税消費税額">
+                <label for="taxColumn">税額列名</label>
+            </div>
+
+            <div class="row">
+                <div class="input-field col s6">
+                    <input type="time" id="startTime" value="00:00:00">
+                    <label for="startTime">開始時間 (HH:MM:SS)</label>
+                </div>
+                <div class="input-field col s6">
+                    <input type="time" id="endTime" value="15:30:00">
+                    <label for="endTime">終了時間 (HH:MM:SS)</label>
+                </div>
+            </div>
+
+            <button onclick="processCSV()" class="btn waves-effect waves-light w-100">集計開始</button>
+        </div>
+
+        <h2 class="center-align">集計結果</h2>
+        <div id="result" class="card-panel grey lighten-5"></div>
+    </div>
+
+    <!-- Materialize JS and dependencies -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+    <script src="script.js"></script>
+</body>
+
+</html>
