@@ -15,15 +15,19 @@ function processCSV() {
     return;
   }
 
+  // ファイルを読み込む
   const reader = new FileReader();
 
   reader.onload = function (event) {
-    const text = event.target.result;
     const decoder = new TextDecoder('shift-jis');
     const csvData = decoder.decode(new Uint8Array(event.target.result));
 
-    const lines = csvData.split('\n');
+    // 行を取得してヘッダーを分離
+    let lines = csvData.split('\n');
     const headers = lines[0].split(',');
+
+    // ヘッダー行を除去
+    lines = lines.slice(1);
 
     // 各列のインデックスを取得
     const dateIndex = headers.findIndex(header => header.includes(dateColumn));
@@ -35,6 +39,18 @@ function processCSV() {
       alert("指定された列名が見つかりません。");
       return;
     }
+
+    // データ行を日付順にソート
+    lines.sort((a, b) => {
+      const rowA = a.split(',');
+      const rowB = b.split(',');
+      if (rowA[dateIndex] && rowB[dateIndex]) {
+        const dateA = new Date(rowA[dateIndex].replace(/"/g, ''));
+        const dateB = new Date(rowB[dateIndex].replace(/"/g, ''));
+        return dateA - dateB;
+      }
+      return 0;
+    });
 
     let dailyResults = {
       allTime: {},
