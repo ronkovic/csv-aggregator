@@ -1,80 +1,128 @@
 function processCSV() {
-    const fileInput = document.getElementById('csvFile');
-    const file = fileInput.files[0];
-    
-    const dateColumn = document.getElementById('dateColumn').value;
-    const peopleColumn = document.getElementById('peopleColumn').value;
-    const amountColumn = document.getElementById('amountColumn').value;
-    const taxColumn = document.getElementById('taxColumn').value;
-    
-    const startTime = document.getElementById('startTime').value;
-    const endTime = document.getElementById('endTime').value;
+  const fileInput = document.getElementById('csvFile');
+  const file = fileInput.files[0];
 
-    if (!file) {
-        alert("ファイルを選択してください");
-        return;
+  const dateColumn = document.getElementById('dateColumn').value;
+  const peopleColumn = document.getElementById('peopleColumn').value;
+  const amountColumn = document.getElementById('amountColumn').value;
+  const taxColumn = document.getElementById('taxColumn').value;
+
+  const startTime = document.getElementById('startTime').value;
+  const endTime = document.getElementById('endTime').value;
+
+  if (!file) {
+    alert("ファイルを選択してください");
+    return;
+  }
+
+  const reader = new FileReader();
+
+  reader.onload = function (event) {
+    const text = event.target.result;
+    const decoder = new TextDecoder('shift-jis');
+    const csvData = decoder.decode(new Uint8Array(event.target.result));
+
+    const lines = csvData.split('\n');
+    const headers = lines[0].split(',');
+
+    // 各列のインデックスを取得
+    const dateIndex = headers.findIndex(header => header.includes(dateColumn));
+    const peopleIndex = headers.findIndex(header => header.includes(peopleColumn));
+    const amountIndex = headers.findIndex(header => header.includes(amountColumn));
+    const taxIndex = headers.findIndex(header => header.includes(taxColumn));
+
+    if (dateIndex === -1 || peopleIndex === -1 || amountIndex === -1 || taxIndex === -1) {
+      alert("指定された列名が見つかりません。");
+      return;
     }
 
-    const reader = new FileReader();
-
-    reader.onload = function (event) {
-        const text = event.target.result;
-        const decoder = new TextDecoder('shift-jis');
-        const csvData = decoder.decode(new Uint8Array(event.target.result));
-
-        const lines = csvData.split('\n');
-        const headers = lines[0].split(',');
-
-        // 各列のインデックスを取得
-        const dateIndex = headers.findIndex(header => header.includes(dateColumn));
-        const peopleIndex = headers.findIndex(header => header.includes(peopleColumn));
-        const amountIndex = headers.findIndex(header => header.includes(amountColumn));
-        const taxIndex = headers.findIndex(header => header.includes(taxColumn));
-
-        if (dateIndex === -1 || peopleIndex === -1 || amountIndex === -1 || taxIndex === -1) {
-            alert("指定された列名が見つかりません。");
-            return;
-        }
-
-        let results = {};
-
-        for (let i = 1; i < lines.length; i++) {
-            const cells = lines[i].split(',');
-            if (cells == "") {
-                break;
-            }
-
-            const dateTime = new Date(cells[dateIndex].replace(/"/g, ''));
-            const date = dateTime.toISOString().split('T')[0];
-            const time = dateTime.toTimeString().split(' ')[0];
-
-            if (time >= startTime && time <= endTime) {
-                if (!results[date]) {
-                    results[date] = {
-                        people: 0,
-                        amount: 0,
-                        tax: 0
-                    };
-                }
-
-                results[date].people += parseInt(cells[peopleIndex].replace(/"/g, ''), 10);
-                results[date].amount += parseInt(cells[amountIndex].replace(/"/g, ''), 10);
-                results[date].tax += parseInt(cells[taxIndex].replace(/"/g, ''), 10);
-            }
-        }
-
-        displayResults(results);
+    let dailyResults = {
+      allTime: {},
+      rangeTime: {},
+    };
+    let weeklyResults = {
+      allTime: {},
+      rangeTime: {},
     };
 
-    reader.readAsArrayBuffer(file);
+    // 曜日を取得するための配列
+    const weekdays = ["日", "月", "火", "水", "木", "金", "土"];
+
+    for (let i = 1; i < lines.length; i++) {
+      const cells = lines[i].split(',');
+      if (cells == "") {
+        break;
+      }
+
+      const dateTime = new Date(cells[dateIndex].replace(/"/g, ''));
+      const date = dateTime.toISOString().split('T')[0];
+      const time = dateTime.toTimeString().split(' ')[0];
+      const weekday = weekdays[dateTime.getDay()]; // 曜日を取得
+
+      // 日別集計
+      if (!dailyResults.allTime[date]) {
+        dailyResults.allTime[date] = {
+          people: 0,
+          amount: 0,
+          tax: 0
+        };
+      }
+      dailyResults.allTime[date].people += parseInt(cells[peopleIndex].replace(/"/g, ''), 10);
+      dailyResults.allTime[date].amount += parseInt(cells[amountIndex].replace(/"/g, ''), 10);
+      dailyResults.allTime[date].tax += parseInt(cells[taxIndex].replace(/"/g, ''), 10);
+
+      // 曜日別集計
+      if (!weeklyResults.allTime[weekday]) {
+        weeklyResults.allTime[weekday] = {
+          people: 0,
+          amount: 0,
+          tax: 0
+        };
+      }
+      weeklyResults.allTime[weekday].people += parseInt(cells[peopleIndex].replace(/"/g, ''), 10);
+      weeklyResults.allTime[weekday].amount += parseInt(cells[amountIndex].replace(/"/g, ''), 10);
+      weeklyResults.allTime[weekday].tax += parseInt(cells[taxIndex].replace(/"/g, ''), 10);
+
+      if (time >= startTime && time <= endTime) {
+        // 日別集計
+        if (!dailyResults.rangeTime[date]) {
+          dailyResults.rangeTime[date] = {
+            people: 0,
+            amount: 0,
+            tax: 0
+          };
+        }
+        dailyResults.rangeTime[date].people += parseInt(cells[peopleIndex].replace(/"/g, ''), 10);
+        dailyResults.rangeTime[date].amount += parseInt(cells[amountIndex].replace(/"/g, ''), 10);
+        dailyResults.rangeTime[date].tax += parseInt(cells[taxIndex].replace(/"/g, ''), 10);
+
+        // 曜日別集計
+        if (!weeklyResults.rangeTime[weekday]) {
+          weeklyResults.rangeTime[weekday] = {
+            people: 0,
+            amount: 0,
+            tax: 0
+          };
+        }
+        weeklyResults.rangeTime[weekday].people += parseInt(cells[peopleIndex].replace(/"/g, ''), 10);
+        weeklyResults.rangeTime[weekday].amount += parseInt(cells[amountIndex].replace(/"/g, ''), 10);
+        weeklyResults.rangeTime[weekday].tax += parseInt(cells[taxIndex].replace(/"/g, ''), 10);
+      }
+    }
+
+    displayResults(dailyResults, weeklyResults);
+  };
+
+  reader.readAsArrayBuffer(file);
 }
 
-function displayResults(results) {
-    const resultDiv = document.getElementById('result');
-    resultDiv.innerHTML = "";
+function displayResults(dailyResults, weeklyResults) {
+  const resultDiv = document.getElementById('result');
+  resultDiv.innerHTML = "";
 
-    // テーブルヘッダー
-    let tableHTML = `
+  // 日別の結果をテーブルに表示
+  let tableHTML = `
+      <h3>日別集計</h3>
         <table class="highlight responsive-table">
             <thead>
                 <tr>
@@ -83,29 +131,76 @@ function displayResults(results) {
                     <th>税抜計</th>
                     <th>合計</th>
                     <th>内税計</th>
+                    <th>人数(終日)</th>
+                    <th>税抜計(終日)</th>
+                    <th>合計(終日)</th>
+                    <th>内税計(終日)</th>
                 </tr>
             </thead>
             <tbody>
     `;
 
-    // テーブルデータ
-    for (const date in results) {
-        tableHTML += `
+  for (const date in dailyResults.rangeTime) {
+    tableHTML += `
             <tr>
-                <td>${date}</td>
-                <td>${results[date].people}</td>
-                <td>${results[date].amount - results[date].tax}円</td>
-                <td>${results[date].amount}円</td>
-                <td>${results[date].tax}円</td>
+            <td>${date}</td>
+            <td>${dailyResults.rangeTime[date].people}</td>
+            <td>${dailyResults.rangeTime[date].amount - dailyResults.rangeTime[date].tax}円</td>
+            <td>${dailyResults.rangeTime[date].amount}円</td>
+            <td>${dailyResults.rangeTime[date].tax}円</td>
+            <td>${dailyResults.allTime[date].people}</td>
+            <td>${dailyResults.allTime[date].amount - dailyResults.allTime[date].tax}円</td>
+            <td>${dailyResults.allTime[date].amount}円</td>
+            <td>${dailyResults.allTime[date].tax}円</td>
             </tr>
         `;
-    }
+  }
 
-    // テーブルフッター
-    tableHTML += `
+  tableHTML += `
             </tbody>
         </table>
     `;
 
-    resultDiv.innerHTML = tableHTML;
+  // 曜日別の結果をテーブルに表示
+  tableHTML += `
+        <h3>曜日別集計</h3>
+        <table class="highlight responsive-table">
+            <thead>
+                <tr>
+                    <th>曜日</th>
+                    <th>人数</th>
+                    <th>税抜計</th>
+                    <th>合計</th>
+                    <th>内税計</th>
+                    <th>人数(終日)</th>
+                    <th>税抜計(終日)</th>
+                    <th>合計(終日)</th>
+                    <th>内税計(終日)</th>
+                </tr>
+            </thead>
+            <tbody>
+    `;
+
+  for (const weekday in weeklyResults.rangeTime) {
+    tableHTML += `
+          <tr>
+              <td>${weekday}</td>
+              <td>${weeklyResults.rangeTime[weekday].people}</td>
+              <td>${weeklyResults.rangeTime[weekday].amount - weeklyResults.rangeTime[weekday].tax}円</td>
+              <td>${weeklyResults.rangeTime[weekday].amount}円</td>
+              <td>${weeklyResults.rangeTime[weekday].tax}円</td>
+              <td>${weeklyResults.allTime[weekday].people}</td>
+              <td>${weeklyResults.allTime[weekday].amount - weeklyResults.allTime[weekday].tax}円</td>
+              <td>${weeklyResults.allTime[weekday].amount}円</td>
+              <td>${weeklyResults.allTime[weekday].tax}円</td>
+          </tr>
+      `;
+  }
+
+  tableHTML += `
+            </tbody>
+        </table>
+    `;
+
+  resultDiv.innerHTML = tableHTML;
 }
