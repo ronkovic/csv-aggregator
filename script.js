@@ -195,6 +195,9 @@ function displayResults(dailyResults, weeklyResults, firstDate, lastDate, startT
         </table>
     `;
 
+  // 曜日インデックス配列を使用して順序をソート
+  const weekdayOrder = ["月", "火", "水", "木", "金", "土", "日"];
+
   // 曜日別の結果をテーブルに表示
   tableHTML += `
         <h5>曜日別集計</h5>
@@ -215,21 +218,25 @@ function displayResults(dailyResults, weeklyResults, firstDate, lastDate, startT
             <tbody>
     `;
 
-  for (const weekday in weeklyResults.rangeTime) {
-    tableHTML += `
-          <tr>
-              <td>${weekday}</td>
-              <td>${weeklyResults.rangeTime[weekday].people}</td>
-              <td>${weeklyResults.rangeTime[weekday].amount - weeklyResults.rangeTime[weekday].tax}円</td>
-              <td>${weeklyResults.rangeTime[weekday].amount}円</td>
-              <td>${weeklyResults.rangeTime[weekday].tax}円</td>
-              <td>${weeklyResults.allTime[weekday].people}</td>
-              <td>${weeklyResults.allTime[weekday].amount - weeklyResults.allTime[weekday].tax}円</td>
-              <td>${weeklyResults.allTime[weekday].amount}円</td>
-              <td>${weeklyResults.allTime[weekday].tax}円</td>
-          </tr>
-      `;
-  }
+
+  // 曜日別結果を「月曜から日曜」の順にソートして表示
+  weekdayOrder.forEach((weekday) => {
+    if (weeklyResults.rangeTime[weekday]) {
+      tableHTML += `
+              <tr>
+                  <td>${weekday}</td>
+                  <td>${weeklyResults.rangeTime[weekday].people}</td>
+                  <td>${weeklyResults.rangeTime[weekday].amount - weeklyResults.rangeTime[weekday].tax}円</td>
+                  <td>${weeklyResults.rangeTime[weekday].amount}円</td>
+                  <td>${weeklyResults.rangeTime[weekday].tax}円</td>
+                  <td>${weeklyResults.allTime[weekday].people}</td>
+                  <td>${weeklyResults.allTime[weekday].amount - weeklyResults.allTime[weekday].tax}円</td>
+                  <td>${weeklyResults.allTime[weekday].amount}円</td>
+                  <td>${weeklyResults.allTime[weekday].tax}円</td>
+              </tr>
+        `;
+    }
+  });
 
   tableHTML += `
             </tbody>
