@@ -45,6 +45,10 @@ function processCSV() {
       rangeTime: {},
     };
 
+    // 日付範囲を取得
+    let firstDate = null;
+    let lastDate = null;
+
     // 曜日を取得するための配列
     const weekdays = ["日", "月", "火", "水", "木", "金", "土"];
 
@@ -58,6 +62,14 @@ function processCSV() {
       const date = dateTime.toISOString().split('T')[0];
       const time = dateTime.toTimeString().split(' ')[0];
       const weekday = weekdays[dateTime.getDay()]; // 曜日を取得
+
+      // 最初の日付と最後の日付を設定
+      if (!firstDate || dateTime < new Date(firstDate)) {
+        firstDate = date;
+      }
+      if (!lastDate || dateTime > new Date(lastDate)) {
+        lastDate = date;
+      }
 
       // 日別集計
       if (!dailyResults.allTime[date]) {
@@ -110,19 +122,25 @@ function processCSV() {
       }
     }
 
-    displayResults(dailyResults, weeklyResults);
+    displayResults(dailyResults, weeklyResults, firstDate, lastDate, startTime, endTime);
   };
 
   reader.readAsArrayBuffer(file);
 }
 
-function displayResults(dailyResults, weeklyResults) {
+function displayResults(dailyResults, weeklyResults, firstDate, lastDate, startTime, endTime) {
   const resultDiv = document.getElementById('result');
   resultDiv.innerHTML = "";
 
+  // 日付範囲の表示
+  let dateRangeHTML = `
+    <h5>集計日にち範囲: ${firstDate} 〜 ${lastDate}</h5>
+    <h5>範囲指定時間: ${startTime} 〜 ${endTime}</h5>
+  `;
+
   // 日別の結果をテーブルに表示
   let tableHTML = `
-      <h3>日別集計</h3>
+      <h5>日別集計</h5>
         <table class="highlight responsive-table">
             <thead>
                 <tr>
@@ -163,7 +181,7 @@ function displayResults(dailyResults, weeklyResults) {
 
   // 曜日別の結果をテーブルに表示
   tableHTML += `
-        <h3>曜日別集計</h3>
+        <h5>曜日別集計</h5>
         <table class="highlight responsive-table">
             <thead>
                 <tr>
@@ -202,5 +220,5 @@ function displayResults(dailyResults, weeklyResults) {
         </table>
     `;
 
-  resultDiv.innerHTML = tableHTML;
+  resultDiv.innerHTML = dateRangeHTML + tableHTML;
 }
